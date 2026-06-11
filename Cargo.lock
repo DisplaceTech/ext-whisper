@@ -456,6 +456,7 @@ version = "0.1.0"
 dependencies = [
  "ext-php-rs",
  "hound",
+ "tempfile",
  "thiserror",
  "whisper-rs",
 ]
