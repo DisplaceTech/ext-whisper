@@ -1,0 +1,33 @@
+{
+    "name": "displace/ext-whisper",
+    "description": "PHP 8.3+ native, in-process speech-to-text via whisper.cpp: 16kHz WAV in, text + timestamped segments out.",
+    "type": "php-ext",
+    "license": "MIT",
+    "homepage": "https://github.com/DisplaceTech/ext-whisper",
+    "authors": [
+        {
+            "name": "Eric Mann",
+            "homepage": "https://eamann.com"
+        }
+    ],
+    "require": {
+        "php": "^8.3"
+    },
+    "php-ext": {
+        "extension-name": "whisper",
+        "priority": 30,
+        "support-zts": true,
+        "support-nts": true,
+        "os-families-exclude": [
+            "windows"
+        ],
+        "download-url-method": [
+            "pre-packaged-binary"
+        ]
+    },
+    "extra": {
+        "branch-alias": {
+            "dev-main": "0.1.x-dev"
+        }
+    }
+}
