@@ -1,0 +1,11 @@
+[book]
+title       = "ext-whisper"
+description = "Local speech-to-text for PHP, in-process via whisper.cpp."
+authors     = ["Eric Mann"]
+language    = "en"
+src         = "src"
+
+[output.html]
+git-repository-url  = "https://github.com/DisplaceTech/ext-whisper"
+edit-url-template   = "https://github.com/DisplaceTech/ext-whisper/edit/main/docs/{path}"
+site-url            = "/"

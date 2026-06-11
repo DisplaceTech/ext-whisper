@@ -1,0 +1,95 @@
+name: Docs
+
+# Builds the mdbook in docs/ and deploys it to GitHub Pages at
+# https://whisper.displace.tech.
+#
+# One-time setup outside of this workflow:
+#
+#   1. DNS — `infer` CNAME to `displacetech.github.io.` at the
+#      registrar (Cloudflare in our case).
+#   2. Repo settings → Pages → Source: GitHub Actions.
+#   3. Repo settings → Pages → Custom domain: whisper.displace.tech.
+#   4. Repo settings → Pages → Enforce HTTPS once GitHub finishes
+#      provisioning the cert.
+#
+# After that, every push to main that touches docs/** redeploys the
+# site automatically. The CNAME file is injected by this workflow on
+# every deploy, so the custom domain doesn't drift even if the Pages
+# settings are reset.
+
+on:
+  push:
+    branches: [main]
+    paths:
+      - 'docs/**'
+      - '.github/workflows/docs.yml'
+  # Allow manual re-deploys from the Actions tab.
+  workflow_dispatch:
+
+permissions:
+  contents: read
+  pages: write
+  id-token: write
+
+# Cancel in-flight runs if a newer push lands on main — the latest
+# main is the only thing worth deploying.
+concurrency:
+  group: pages
+  cancel-in-progress: true
+
+env:
+  # Pin mdbook so docs builds are reproducible across runs. Bump the
+  # version here (and re-check the release page for the right tarball
+  # naming) when mdbook ships a feature we want.
+  MDBOOK_VERSION: '0.5.3'
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: 'true'
+
+jobs:
+  build:
+    name: build mdbook
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install mdbook
+        run: |
+          set -euo pipefail
+          mkdir -p "$HOME/.local/bin"
+          # Pre-built mdbook tarball — faster than `cargo install` and
+          # doesn't need a Rust toolchain on the runner.
+          curl -fsSL \
+            "https://github.com/rust-lang/mdBook/releases/download/v${MDBOOK_VERSION}/mdbook-v${MDBOOK_VERSION}-x86_64-unknown-linux-gnu.tar.gz" \
+            | tar -xz -C "$HOME/.local/bin"
+          echo "$HOME/.local/bin" >> "$GITHUB_PATH"
+
+      - name: Build
+        run: mdbook build docs
+
+      - name: Inject CNAME
+        # GitHub Pages reads CNAME from the deployed artifact root.
+        # Re-injecting on every deploy means the custom domain config
+        # survives Pages-settings resets and Pages-source migrations.
+        run: echo 'whisper.displace.tech' > docs/book/CNAME
+
+      - name: Inject .nojekyll
+        # mdbook output paths include underscores (e.g. internal
+        # `_FontAwesome/` for icons); GitHub Pages' default Jekyll
+        # processing would refuse to serve them. .nojekyll opts out.
+        run: touch docs/book/.nojekyll
+
+      - uses: actions/configure-pages@v5
+
+      - uses: actions/upload-pages-artifact@v3
+        with:
+          path: docs/book
+
+  deploy:
+    name: deploy to GitHub Pages
+    needs: build
+    runs-on: ubuntu-latest
+    environment:
+      name: github-pages
+      url: ${{ steps.deployment.outputs.page_url }}
+    steps:
+      - id: deployment
+        uses: actions/deploy-pages@v4

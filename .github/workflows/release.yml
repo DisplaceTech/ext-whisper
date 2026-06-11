@@ -1,0 +1,239 @@
+name: Release
+
+# Triggered when a tag matching `v*` is pushed (e.g. `v0.1.0`). For each
+# supported platform × PHP-minor combination, we build a release-mode
+# `whisper.so`/`whisper.dylib`, package it with PIE's expected filename
+# convention, and upload the artifact to the GitHub Release that the
+# tag created.
+#
+# Filename convention (verified against PIE 1.4.5):
+#
+#     php_{name}-{version}_php{minor}-{arch}-{os}-{libc}-{tsmode}.tgz
+#
+# Notably:
+#   - {version} keeps the leading `v` from the tag (PIE looks for `v0.1.0`).
+#   - {libc} is mandatory even on darwin (`bsdlibc`); Linux is `glibc`.
+#   - {tsmode} is explicit (`-nts` here, `-zts` when we add ZTS).
+#   - Extension is `.tgz`, not `.tar.gz`.
+#
+# For our 9-leg matrix (PHP 8.3/8.4/8.5 × {macos-arm64, linux-x86_64,
+# linux-arm64}) that means tarballs like:
+#
+#     php_whisper-v0.1.0_php8.5-arm64-darwin-bsdlibc-nts.tgz
+#     php_whisper-v0.1.0_php8.4-x86_64-linux-glibc-nts.tgz
+#     php_whisper-v0.1.0_php8.3-arm64-linux-glibc-nts.tgz
+#
+# (NTS-only for now; ZTS support is enabled in composer.json but no widely
+# distributed ZTS PHP runner ships on the GitHub matrix yet — revisit when
+# `shivammathur/setup-php` grows a TS option on the runners we use.)
+
+on:
+  push:
+    tags:
+      - 'v*'
+
+permissions:
+  contents: write    # uploads the release artifacts
+
+env:
+  CARGO_TERM_COLOR: always
+  RUSTFLAGS: -D warnings
+  FORCE_JAVASCRIPT_ACTIONS_TO_NODE24: "true"
+
+jobs:
+  # Transitive license manifest for everything statically linked into the
+  # release binaries (llama.cpp via llama-cpp-sys-2, ext-php-rs, and every
+  # runtime crate between). `about.toml` accepts only permissive licenses,
+  # so a future dependency that drags in copyleft fails this job — and
+  # therefore the release — loudly.
+  notices:
+    name: license manifest
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - name: Install cargo-about
+        # The `cli` feature gates the binary itself in recent releases and
+        # is no longer a default feature.
+        run: cargo install cargo-about --locked --features cli
+
+      - name: Generate manifest
+        run: cargo about generate about.hbs -o THIRD-PARTY-LICENSES.html
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          draft: true
+          files: THIRD-PARTY-LICENSES.html
+          fail_on_unmatched_files: true
+
+  build:
+    name: build ${{ matrix.label }}
+    runs-on: ${{ matrix.runner }}
+    strategy:
+      fail-fast: false
+      matrix:
+        include:
+          # macos-arm64. PIE wants `bsdlibc` in the libc slot for darwin.
+          - label: 'php8.3-arm64-darwin'
+            runner: macos-14
+            php: '8.3'
+            arch: 'arm64'
+            os: 'darwin'
+            libc: 'bsdlibc'
+          - label: 'php8.4-arm64-darwin'
+            runner: macos-14
+            php: '8.4'
+            arch: 'arm64'
+            os: 'darwin'
+            libc: 'bsdlibc'
+          - label: 'php8.5-arm64-darwin'
+            runner: macos-14
+            php: '8.5'
+            arch: 'arm64'
+            os: 'darwin'
+            libc: 'bsdlibc'
+          # linux-x86_64
+          - label: 'php8.3-x86_64-linux-glibc'
+            runner: ubuntu-latest
+            php: '8.3'
+            arch: 'x86_64'
+            os: 'linux'
+            libc: 'glibc'
+          - label: 'php8.4-x86_64-linux-glibc'
+            runner: ubuntu-latest
+            php: '8.4'
+            arch: 'x86_64'
+            os: 'linux'
+            libc: 'glibc'
+          - label: 'php8.5-x86_64-linux-glibc'
+            runner: ubuntu-latest
+            php: '8.5'
+            arch: 'x86_64'
+            os: 'linux'
+            libc: 'glibc'
+          # linux-arm64
+          - label: 'php8.3-arm64-linux-glibc'
+            runner: ubuntu-24.04-arm
+            php: '8.3'
+            arch: 'arm64'
+            os: 'linux'
+            libc: 'glibc'
+          - label: 'php8.4-arm64-linux-glibc'
+            runner: ubuntu-24.04-arm
+            php: '8.4'
+            arch: 'arm64'
+            os: 'linux'
+            libc: 'glibc'
+          - label: 'php8.5-arm64-linux-glibc'
+            runner: ubuntu-24.04-arm
+            php: '8.5'
+            arch: 'arm64'
+            os: 'linux'
+            libc: 'glibc'
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install system deps (Linux)
+        if: runner.os == 'Linux'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y cmake build-essential libclang-dev
+
+      - name: Install system deps (macOS)
+        if: runner.os == 'macOS'
+        run: brew install cmake
+
+      - uses: shivammathur/setup-php@v2
+        with:
+          php-version: ${{ matrix.php }}
+          tools: none
+          coverage: none
+
+      - uses: dtolnay/rust-toolchain@stable
+
+      - uses: Swatinem/rust-cache@v2
+        with:
+          # Same per-PHP scoping as ci.yml — ext-php-rs bindings are
+          # PHP-version-specific and the default cache key doesn't include
+          # the matrix.
+          key: release-php-${{ matrix.php }}-${{ matrix.arch }}
+
+      - name: Build release
+        run: cargo build --release
+
+      - name: Stage artifact
+        id: stage
+        shell: bash
+        env:
+          ARCH: ${{ matrix.arch }}
+          OS: ${{ matrix.os }}
+          LIBC: ${{ matrix.libc }}
+          PHP_MINOR: ${{ matrix.php }}
+        run: |
+          set -euo pipefail
+          # PIE matches archive names verbatim. The format it expects is
+          #
+          #   php_{name}-{version}_php{minor}-{arch}-{os}-{libc}-{tsmode}.{ext}
+          #
+          # with these gotchas (learned the hard way during the v0.1.0 cut):
+          #
+          #   - Version *includes* the leading `v` from the tag. PIE looks
+          #     for `v0.1.0`, not `0.1.0`.
+          #   - The libc segment is required, even on darwin. PIE asks
+          #     for `bsdlibc` there; Linux is `glibc` (or `musl`).
+          #   - TS-mode segment is explicit. Our binaries are NTS, so the
+          #     suffix is `-nts`. ZTS builds (when we ship them) will use
+          #     `-zts` in the same slot.
+          #   - Extension is `.tgz`, not `.tar.gz`. Same bytes, different
+          #     glob.
+          version="$GITHUB_REF_NAME"
+          echo "version=$version" >> "$GITHUB_OUTPUT"
+
+          # Cargo names the cdylib per host convention: `libwhisper.dylib`
+          # on macOS, `libwhisper.so` on Linux. PIE, however, looks for
+          # `{extension-name}.so` inside the archive on every platform —
+          # it doesn't know about `.dylib`. PHP itself is agnostic
+          # (dlopen takes a path, not a suffix), so flattening to `.so`
+          # everywhere is safe and is what PIE actually wants.
+          if [ "${{ runner.os }}" = "macOS" ]; then
+            src="$PWD/target/release/libwhisper.dylib"
+          else
+            src="$PWD/target/release/libwhisper.so"
+          fi
+          test -f "$src" || { echo "missing $src"; exit 1; }
+
+          stage="$RUNNER_TEMP/stage"
+          mkdir -p "$stage"
+          cp "$src" "$stage/whisper.so"
+
+          archive="php_whisper-${version}_php${PHP_MINOR}-${ARCH}-${OS}-${LIBC}-nts.tgz"
+          echo "archive=$archive" >> "$GITHUB_OUTPUT"
+
+          # tar from inside the staging dir so the archive doesn't carry a
+          # nested directory prefix — PIE expects the loadable at the root.
+          tar -C "$stage" -czf "$RUNNER_TEMP/$archive" "whisper.so"
+          echo "path=$RUNNER_TEMP/$archive" >> "$GITHUB_OUTPUT"
+
+          # SHA-256 sidecar for downstream supply-chain verification.
+          if command -v sha256sum >/dev/null 2>&1; then
+            (cd "$RUNNER_TEMP" && sha256sum "$archive" > "$archive.sha256")
+          else
+            (cd "$RUNNER_TEMP" && shasum -a 256 "$archive" > "$archive.sha256")
+          fi
+
+      - name: Upload to GitHub Release
+        uses: softprops/action-gh-release@v2
+        with:
+          # `softprops` skips updating fields like `body` when this job runs
+          # against an existing release (one matrix leg will create the
+          # release, the rest will reuse it). Setting `draft: true` keeps
+          # the release out of the public-feed until a maintainer reviews
+          # the contents and clicks "Publish".
+          draft: true
+          files: |
+            ${{ runner.temp }}/${{ steps.stage.outputs.archive }}
+            ${{ runner.temp }}/${{ steps.stage.outputs.archive }}.sha256
+          fail_on_unmatched_files: true
