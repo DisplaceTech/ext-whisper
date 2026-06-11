@@ -1,0 +1,14 @@
+# Settings that can't be expressed from build.rs.
+#
+# The dynamic-lookup link flag PHP extensions need at link time is emitted
+# by build.rs via `cargo:rustc-cdylib-link-arg=...`, which (unlike the
+# `rustflags` arrays here) survives a caller setting `RUSTFLAGS` in the
+# environment. See build.rs for the rationale and the CI failure mode that
+# forced this split.
+#
+# The musl target-feature override below has no `cargo:` directive
+# equivalent — it has to live in `rustflags`. Consumers targeting musl with
+# `RUSTFLAGS` set must include `-C target-feature=-crt-static` themselves.
+
+[target.'cfg(target_env = "musl")']
+rustflags = ["-C", "target-feature=-crt-static"]

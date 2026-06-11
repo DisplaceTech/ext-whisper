@@ -1,0 +1,25 @@
+[package]
+name          = "ext-whisper"
+version       = "0.1.0"
+edition       = "2021"
+rust-version  = "1.88"
+license       = "MIT"
+description   = "PHP 8.3+ native, in-process speech-to-text against local whisper models via whisper.cpp."
+repository    = "https://github.com/DisplaceTech/ext-whisper"
+readme        = "README.md"
+publish       = false
+
+[lib]
+name       = "whisper"
+crate-type = ["cdylib"]
+
+[dependencies]
+ext-php-rs = "=0.15.13"
+hound = "=3.5.1"
+thiserror  = "=2.0.18"
+whisper-rs = "=0.16.0"
+
+[profile.release]
+lto           = "thin"
+codegen-units = 1
+strip         = "symbols"

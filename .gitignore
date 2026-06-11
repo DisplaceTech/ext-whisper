@@ -1,0 +1,30 @@
+/target/
+**/*.rs.bk
+*.so
+*.dylib
+*.dll
+
+# PHPT artifacts
+tests/phpt/*.diff
+tests/phpt/*.exp
+tests/phpt/*.log
+tests/phpt/*.out
+tests/phpt/*.php
+tests/phpt/*.sh
+tests/phpt/*.mem
+
+# Editor/IDE noise
+.idea/
+.vscode/
+*.swp
+.DS_Store
+
+# Local model files used by tests/examples
+*.gguf
+/models/
+
+# PHPT harness fetched on demand by the CI workflow and `make test`. We
+# version this in CI per PHP minor (see .github/workflows/ci.yml) rather
+# than committing a single copy that would drift from each contributor's
+# local PHP.
+/run-tests.php
