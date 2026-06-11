@@ -1,0 +1,31 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="utf-8">
+    <title>ext-whisper — third-party licenses</title>
+    <style>
+        body { font-family: sans-serif; max-width: 60rem; margin: 2rem auto; padding: 0 1rem; }
+        pre { background: #f6f8fa; padding: 1rem; overflow-x: auto; white-space: pre-wrap; }
+        h2 { border-bottom: 1px solid #ddd; padding-bottom: .25rem; }
+    </style>
+</head>
+<body>
+    <h1>Third-party licenses</h1>
+    <p>
+        Licenses for every Rust crate statically linked into ext-whisper
+        release binaries, generated transitively by
+        <a href="https://github.com/EmbarkStudios/cargo-about">cargo-about</a>.
+        Overview in <code>THIRD-PARTY-NOTICES.md</code>.
+    </p>
+
+    {{#each licenses}}
+    <h2>{{name}} ({{id}})</h2>
+    <p>Used by:
+        {{#each used_by}}
+        <a href="{{#if crate.repository}}{{crate.repository}}{{else}}https://crates.io/crates/{{crate.name}}{{/if}}">{{crate.name}} {{crate.version}}</a>{{#unless @last}}, {{/unless}}
+        {{/each}}
+    </p>
+    <pre>{{text}}</pre>
+    {{/each}}
+</body>
+</html>

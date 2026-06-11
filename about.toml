@@ -1,0 +1,30 @@
+# cargo-about configuration — generates the transitive license manifest
+# attached to GitHub Releases (see .github/workflows/release.yml).
+#
+# The accepted list is deliberately broad: this gate exists to *document*
+# what we ship, not to police it — every entry below is a permissive
+# license compatible with our MIT distribution. Copyleft licenses are
+# intentionally absent so a future dependency change that introduces one
+# fails the release job loudly instead of shipping silently.
+accepted = [
+    "MIT",
+    "MIT-0",
+    "Apache-2.0",
+    "Apache-2.0 WITH LLVM-exception",
+    "BSD-2-Clause",
+    "BSD-3-Clause",
+    "ISC",
+    "Zlib",
+    "0BSD",
+    "Unlicense",
+    "Unicode-3.0",
+    "Unicode-DFS-2016",
+    "CC0-1.0",
+    "CDLA-Permissive-2.0",
+    "bzip2-1.0.6",
+]
+
+# Only what release binaries actually link. Build-time tooling (bindgen,
+# cmake drivers, ...) and dev-dependencies never ship.
+ignore-build-dependencies = true
+ignore-dev-dependencies = true
