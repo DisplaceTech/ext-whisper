@@ -16,24 +16,22 @@ Living document. Status / surface description lives in
 | `WhisperException` hierarchy | built |
 | PHPT suite (7 tests; transcription gated on `WHISPER_TEST_MODEL`) | built |
 | CI matrix (8.3/8.4/8.5 × {macos-arm64, ubuntu, ubuntu-arm64}) | built |
-| Tag-triggered PIE release workflow + `cargo about` manifest | built, not yet exercised |
-| mdbook docs (whisper.displace.tech) | skeleton built; CNAME pending |
+| Tag-triggered PIE release workflow + `cargo about` manifest | shipped, exercised through v0.1.0 |
+| mdbook docs (whisper.displace.tech) | live |
 | `composer.json` (PIE-compatible) | built |
 
 ## Releases
 
 | Version | Date | Notes |
 | --- | --- | --- |
-| _v0.1.0 pending_ | — | Awaiting docs CNAME + Packagist registration, then tag. |
+| v0.1.0 | 2026-06-11 | First public release: load/transcribe/close, Transcription with seconds-offset segments, strict WAV reader, 9-leg PIE binaries + license manifest on the GitHub release. |
 
-## Up next (v0.1.0 exit)
+## Up next
 
-- [ ] DNS: `whisper` CNAME → `displacetech.github.io.`; repo Pages
-      settings (source: Actions, custom domain, HTTPS).
-- [ ] Packagist: claim `displace/ext-whisper`.
-- [ ] Tag v0.1.0 → release workflow builds the 9-leg binary matrix.
+- [x] DNS, Packagist, v0.1.0 tag + published release — done 2026-06-11.
 - [ ] Heads-up issue to whisper-rs upstream (bindings courtesy link),
-      per the umbrella roadmap's upstream-relations policy.
+      per the umbrella roadmap's upstream-relations policy — awaiting
+      Eric's go-ahead (outreach in his name).
 
 ## Later (v0.2 candidates, in rough order)
 
