@@ -40,7 +40,7 @@ Two files carry the version explicitly:
 
 - `Cargo.toml` (`[package].version`). The cargo build script consumes
   this for `CARGO_PKG_VERSION`; we don't surface it to PHP today, but
-  may in a future `Displace\Infer\VERSION` constant.
+  may in a future `Displace\Whisper\VERSION` constant.
 - The `git` tag (`v{semver}`). PIE reads its version from the tag, not
   from `composer.json`. Composer's docs are explicit:
   > "PIE follows the usual PHP extension build and install process";
