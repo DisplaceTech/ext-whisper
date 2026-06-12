@@ -5,7 +5,7 @@ name: Docs
 #
 # One-time setup outside of this workflow:
 #
-#   1. DNS — `infer` CNAME to `displacetech.github.io.` at the
+#   1. DNS — the whisper.displace.tech CNAME to `displacetech.github.io.` at the
 #      registrar (Cloudflare in our case).
 #   2. Repo settings → Pages → Source: GitHub Actions.
 #   3. Repo settings → Pages → Custom domain: whisper.displace.tech.

@@ -42,7 +42,7 @@ env:
 
 jobs:
   # Transitive license manifest for everything statically linked into the
-  # release binaries (llama.cpp via llama-cpp-sys-2, ext-php-rs, and every
+  # release binaries (the vendored C/C++ core, ext-php-rs, and every
   # runtime crate between). `about.toml` accepts only permissive licenses,
   # so a future dependency that drags in copyleft fails this job — and
   # therefore the release — loudly.
@@ -162,6 +162,13 @@ jobs:
           key: release-php-${{ matrix.php }}-${{ matrix.arch }}
 
       - name: Build release
+        env:
+          # Setting RUSTFLAGS clobbers .cargo/config.toml's rustflags, so
+          # codegen flags that shipped binaries must keep are re-asserted
+          # here on x86_64 legs from .ext-template.conf's X86_RUSTFLAGS
+          # (e.g. ext-turbovec's -C target-cpu=x86-64-v3). Empty for most
+          # extensions.
+          RUSTFLAGS: "-D warnings ${{ matrix.arch == 'x86_64' && '' || '' }}"
         run: cargo build --release
 
       - name: Stage artifact

@@ -7,6 +7,10 @@ on:
 
 env:
   CARGO_TERM_COLOR: always
+  # NOTE: setting RUSTFLAGS replaces .cargo/config.toml's rustflags arrays.
+  # Acceptable in CI (correctness never depends on per-repo codegen flags);
+  # release.yml re-asserts any shipped-binary flags via X86_RUSTFLAGS in
+  # .ext-template.conf.
   RUSTFLAGS: -D warnings
   # Opt every JavaScript-based action into the Node 24 runtime ahead of
   # GitHub's June 2026 forced cut-over. `actions/checkout@v4` and the
@@ -65,8 +69,8 @@ jobs:
 
       - name: Install system deps (macOS)
         if: runner.os == 'macOS'
-        run: |
-          brew install cmake
+        # `true` when the extension needs nothing beyond Xcode CLT.
+        run: brew install cmake
 
       - uses: shivammathur/setup-php@v2
         with:
