@@ -1,4 +1,8 @@
+# Template-managed (ext-template): the channel comes from
+# template/versions.conf and applies to every extension — the floor is
+# set by the most demanding one (currently turbovec's AVX-512BW
+# target_feature, stabilized in 1.89).
 [toolchain]
-channel    = "1.88.0"
+channel    = "1.89.0"
 components = ["rustfmt", "clippy"]
 profile    = "minimal"

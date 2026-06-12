@@ -2,7 +2,7 @@
 name          = "ext-whisper"
 version       = "0.1.0"
 edition       = "2021"
-rust-version  = "1.88"
+rust-version  = "1.89"
 license       = "MIT"
 description   = "PHP 8.3+ native, in-process speech-to-text against local whisper models via whisper.cpp."
 repository    = "https://github.com/DisplaceTech/ext-whisper"
