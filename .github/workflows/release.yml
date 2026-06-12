@@ -147,9 +147,9 @@ jobs:
         run: brew install cmake
 
       # Pinned to 2.36.0: setup-php 2.37.x stopped installing PHP on the
-        # macos-14 runners on 2026-06-12 (empty-variable cascade inside its
-        # brew path; minimal repro in ext-template's "macOS probe" workflow).
-        # Re-probe and unpin when upstream ships a fix.
+      # macos-14 runners on 2026-06-12 (empty-variable cascade inside its
+      # brew path; minimal repro in ext-template's "macOS probe" workflow).
+      # Re-probe and unpin when upstream ships a fix.
       - uses: shivammathur/setup-php@2.36.0
         with:
           php-version: ${{ matrix.php }}
