@@ -7,16 +7,16 @@ form (consumed by IDEs and static analyzers), see
 ## `Displace\Whisper\Model`
 
 ```php
-final class Model
+class Model
 {
     public static function load(
         string $path,
-        array  $options = [],   // use_gpu (bool, default false)
+        ?array  $options = null,   // use_gpu (bool, default false)
     ): self;
 
     public function transcribe(
         string $wavPath,
-        array  $options = [],   // language (string), translate (bool), threads (int)
+        ?array  $options = null,   // language (string), translate (bool), threads (int)
     ): \Displace\Whisper\Transcription;
 
     public function close(): void;   // idempotent
@@ -26,7 +26,7 @@ final class Model
 ## `Displace\Whisper\Transcription`
 
 ```php
-final class Transcription
+class Transcription
 {
     public function text(): string;
 
