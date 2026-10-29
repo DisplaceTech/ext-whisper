@@ -4,6 +4,15 @@ on:
   push:
     branches: [main]
   pull_request:
+  # Weekly run against fresh runners, toolchains, and setup-php so a green
+  # badge means "green this week", not "green at the last commit".
+  # GitHub disables scheduled workflows in public repos after 60 days with
+  # no repository activity; the weekly Dependabot PRs (and merging them)
+  # are what keep this schedule alive. If it ever goes dormant, re-enable
+  # it from the Actions tab or push any commit.
+  schedule:
+    - cron: '17 6 * * 1'   # Mondays 06:17 UTC
+  workflow_dispatch:
 
 env:
   CARGO_TERM_COLOR: always
@@ -32,11 +41,7 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y cmake build-essential libclang-dev
 
-      # Pinned to 2.36.0: setup-php 2.37.x stopped installing PHP on the
-      # macos-14 runners on 2026-06-12 (empty-variable cascade inside its
-      # brew path; minimal repro in ext-template's "macOS probe" workflow).
-      # Re-probe and unpin when upstream ships a fix.
-      - uses: shivammathur/setup-php@2.36.0
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: '8.4'
           tools: none
@@ -52,9 +57,12 @@ jobs:
       - run: cargo clippy --all-targets -- -D warnings
 
   test:
-    name: test (PHP ${{ matrix.php }} / ${{ matrix.os }})
+    name: test (PHP ${{ matrix.php }} ${{ matrix.ts }} / ${{ matrix.os }})
     runs-on: ${{ matrix.os }}
     needs: lint
+    # ZTS legs are informational until they have a track record; NTS legs
+    # gate merges as before.
+    continue-on-error: ${{ matrix.ts == 'zts' }}
     strategy:
       fail-fast: false
       matrix:
@@ -62,13 +70,12 @@ jobs:
         # 8.5 is the current stable; 8.4 is the most-deployed; 8.3 is
         # security-only through end of 2026 but still widely installed.
         php: ['8.3', '8.4', '8.5']
-        exclude:
-          # setup-php cannot currently install PHP 8.5 on the macos-14
-          # runners (2026-06-12: 2.37.x fails for every PHP version there,
-          # and 2.36.0 predates 8.5). Re-add this leg when ext-template's
-          # "macOS probe" workflow passes on @v2 again.
-          - os: macos-14
-            php: '8.5'
+        ts: [nts]
+        include:
+          # Thread-safe PHP (FrankenPHP, Apache mpm_worker/event + mod_php,
+          # parallel). Linux only: setup-php's ZTS builds are Ubuntu-native.
+          - { os: ubuntu-latest, php: '8.4', ts: zts }
+          - { os: ubuntu-latest, php: '8.5', ts: zts }
     steps:
       - uses: actions/checkout@v4
 
@@ -83,15 +90,17 @@ jobs:
         # `true` when the extension needs nothing beyond Xcode CLT.
         run: brew install cmake
 
-      # Pinned to 2.36.0: setup-php 2.37.x stopped installing PHP on the
-      # macos-14 runners on 2026-06-12 (empty-variable cascade inside its
-      # brew path; minimal repro in ext-template's "macOS probe" workflow).
-      # Re-probe and unpin when upstream ships a fix.
-      - uses: shivammathur/setup-php@2.36.0
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           tools: none
           coverage: none
+        env:
+          phpts: ${{ matrix.ts == 'zts' && 'ts' || 'nts' }}
+
+      - name: Confirm thread-safety mode
+        run: |
+          php -r 'echo "PHP ", PHP_VERSION, " ZTS=", var_export((bool) PHP_ZTS, true), "\n"; exit((PHP_ZTS ? "zts" : "nts") === "${{ matrix.ts }}" ? 0 : 1);'
 
       - name: Fetch run-tests.php
         run: |
@@ -109,7 +118,7 @@ jobs:
       # fail to load into a PHP 8.4 process at runtime.
       - uses: Swatinem/rust-cache@v2
         with:
-          key: php-${{ matrix.php }}
+          key: php-${{ matrix.php }}-${{ matrix.ts }}
 
       - name: Build
         run: cargo build --verbose

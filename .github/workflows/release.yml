@@ -23,9 +23,10 @@ name: Release
 #     php_whisper-v0.1.0_php8.4-x86_64-linux-glibc-nts.tgz
 #     php_whisper-v0.1.0_php8.3-arm64-linux-glibc-nts.tgz
 #
-# (NTS-only for now; ZTS support is enabled in composer.json but no widely
-# distributed ZTS PHP runner ships on the GitHub matrix yet — revisit when
-# `shivammathur/setup-php` grows a TS option on the runners we use.)
+# (NTS-only release binaries. ZTS is enabled in composer.json, so PIE
+# builds from source on thread-safe PHP; ci.yml exercises ZTS on Linux via
+# setup-php's `phpts: ts`. Shipping prebuilt -zts tarballs is a separate
+# decision, made once those CI legs have a track record.)
 
 on:
   push:
@@ -146,11 +147,7 @@ jobs:
         if: runner.os == 'macOS'
         run: brew install cmake
 
-      # Pinned to 2.36.0: setup-php 2.37.x stopped installing PHP on the
-      # macos-14 runners on 2026-06-12 (empty-variable cascade inside its
-      # brew path; minimal repro in ext-template's "macOS probe" workflow).
-      # Re-probe and unpin when upstream ships a fix.
-      - uses: shivammathur/setup-php@2.36.0
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           tools: none
