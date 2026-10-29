@@ -19,7 +19,7 @@ help:
 	@echo "  make clippy      cargo clippy -- -D warnings"
 	@echo "  make fmt         cargo fmt"
 	@echo "  make fmt-check   cargo fmt --check"
-	@echo "  make stubs       Regenerate stubs/whisper.stubs.php"
+	@echo "  make stubs       Generate target/whisper.stubs.php to diff against stubs/"
 	@echo "  make install     cargo php install (loads the extension into your PHP)"
 	@echo "  make uninstall   cargo php remove"
 	@echo "  make clean       cargo clean"
@@ -83,8 +83,21 @@ test: build $(RUN_TESTS_PHP)
 	TEST_PHP_ARGS="-n -d extension=$(EXT_PATH)" \
 		$(PHP) $(RUN_TESTS_PHP) -q --show-diff tests/phpt
 
+# The committed stubs/whisper.stubs.php is curated (generics, @throws, prose)
+# on top of what cargo-php emits, so generation goes to target/ for a
+# signature diff rather than overwriting it:
+#
+#     make stubs && diff -u stubs/whisper.stubs.php target/whisper.stubs.php
+#
+# cargo-php dlopen()s the cdylib outside PHP. On Linux the Zend data
+# symbols it references (e.g. spl_ce_RuntimeException) must resolve at
+# load time, so preload PHP's embed SAPI library, e.g.
+#     make stubs STUBS_PRELOAD=/usr/lib/libphp8.4.so
+# macOS resolves them lazily and needs nothing.
+STUBS_PRELOAD ?=
+
 stubs: check-cargo-php build
-	$(CARGO) php stubs --stubs stubs/whisper.stubs.php
+	$(if $(STUBS_PRELOAD),LD_PRELOAD=$(STUBS_PRELOAD) )$(CARGO) php stubs --out target/whisper.stubs.php
 
 install: check-cargo-php
 	$(CARGO) php install --release $(CARGO_FLAGS)
