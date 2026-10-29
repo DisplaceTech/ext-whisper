@@ -1,0 +1,38 @@
+# Template-managed (ext-template): edit upstream in
+# template/managed/.github/dependabot.yml, then bin/sync. See the
+# "Dependency updates" section of ext-template's README for the design.
+#
+# Weekly, grouped minor/patch updates for the crates this extension owns.
+# Three classes of dependency are deliberately excluded:
+#
+# - ext-php-rs, thiserror: their pins live in ext-template's
+#   template/versions.conf and cascade through bin/sync. A Dependabot PR
+#   here would be reverted by the next sync.
+# - The primary upstream crate (llama-cpp-2 / turbovec / whisper-rs and
+#   their -sys crates): bumps are deliberate, tested events with format
+#   and behaviour checks. ext-template's scheduled upstream watcher opens
+#   an issue when one falls behind crates.io instead of a PR.
+# - GitHub Actions: every workflow in this repo is template-managed.
+#   ext-template's own Dependabot config bumps action versions in
+#   template/managed/, and bin/sync carries them here.
+version: 2
+updates:
+  - package-ecosystem: cargo
+    directory: /
+    schedule:
+      interval: weekly
+      day: monday
+    open-pull-requests-limit: 5
+    commit-message:
+      prefix: "chore(deps)"
+    groups:
+      cargo-minor-patch:
+        update-types: [minor, patch]
+    ignore:
+      - dependency-name: ext-php-rs
+      - dependency-name: thiserror
+      - dependency-name: llama-cpp-2
+      - dependency-name: llama-cpp-sys-2
+      - dependency-name: turbovec
+      - dependency-name: whisper-rs
+      - dependency-name: whisper-rs-sys

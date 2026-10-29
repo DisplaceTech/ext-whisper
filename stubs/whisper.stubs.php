@@ -4,7 +4,7 @@
 //
 // Regenerate from the registered classes after building:
 //
-//     make stubs   # wraps `cargo php stubs --stubs stubs/whisper.stubs.php`
+//     make stubs   # writes target/whisper.stubs.php — diff it against this file
 
 namespace Displace\Whisper;
 

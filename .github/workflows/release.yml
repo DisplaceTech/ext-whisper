@@ -23,9 +23,10 @@ name: Release
 #     php_whisper-v0.1.0_php8.4-x86_64-linux-glibc-nts.tgz
 #     php_whisper-v0.1.0_php8.3-arm64-linux-glibc-nts.tgz
 #
-# (NTS-only for now; ZTS support is enabled in composer.json but no widely
-# distributed ZTS PHP runner ships on the GitHub matrix yet — revisit when
-# `shivammathur/setup-php` grows a TS option on the runners we use.)
+# (NTS-only release binaries. ZTS is enabled in composer.json, so PIE
+# builds from source on thread-safe PHP; ci.yml exercises ZTS on Linux via
+# setup-php's `phpts: ts`. Shipping prebuilt -zts tarballs is a separate
+# decision, made once those CI legs have a track record.)
 
 on:
   push:
@@ -141,16 +142,24 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential libclang-dev
+          # Pin bindgen to the LLVM that libclang-dev installed. ubuntu-26.04
+          # runners preinstall clang 20, 21 and 22; unpinned, clang-sys loads
+          # the newest libclang (22) while the builtin headers come from
+          # libclang-dev's LLVM (21), and clang 22 dropped x86 builtins those
+          # headers still call -> "Unable to generate bindings for PHP"
+          # (reproduced with ext-php-rs 0.15.13 and 0.16.3 alike).
+          v=$(dpkg-query -W -f='${Depends}' libclang-dev | grep -o 'libclang-[0-9]*-dev' | grep -o '[0-9]\+' | head -1)
+          echo "LIBCLANG_PATH=/usr/lib/llvm-$v/lib" >> "$GITHUB_ENV"
+          if [ -x "/usr/lib/llvm-$v/bin/clang" ]; then
+            echo "CLANG_PATH=/usr/lib/llvm-$v/bin/clang" >> "$GITHUB_ENV"
+          fi
+          echo "bindgen pinned to LLVM $v"
 
       - name: Install system deps (macOS)
         if: runner.os == 'macOS'
         run: brew install cmake
 
-      # Pinned to 2.36.0: setup-php 2.37.x stopped installing PHP on the
-      # macos-14 runners on 2026-06-12 (empty-variable cascade inside its
-      # brew path; minimal repro in ext-template's "macOS probe" workflow).
-      # Re-probe and unpin when upstream ships a fix.
-      - uses: shivammathur/setup-php@2.36.0
+      - uses: shivammathur/setup-php@v2
         with:
           php-version: ${{ matrix.php }}
           tools: none

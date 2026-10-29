@@ -1,6 +1,6 @@
 [package]
 name          = "ext-whisper"
-version       = "0.1.0"
+version       = "0.1.1"
 edition       = "2021"
 rust-version  = "1.89"
 license       = "MIT"
@@ -14,9 +14,9 @@ name       = "whisper"
 crate-type = ["cdylib"]
 
 [dependencies]
-ext-php-rs = "=0.15.13"
+ext-php-rs = "=0.16.3"
 hound = "=3.5.1"
-thiserror  = "=2.0.18"
+thiserror  = "=2.0.21"
 whisper-rs = "=0.16.0"
 
 [profile.release]
