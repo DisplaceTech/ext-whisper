@@ -142,6 +142,18 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y cmake build-essential libclang-dev
+          # Pin bindgen to the LLVM that libclang-dev installed. ubuntu-26.04
+          # runners preinstall clang 20, 21 and 22; unpinned, clang-sys loads
+          # the newest libclang (22) while the builtin headers come from
+          # libclang-dev's LLVM (21), and clang 22 dropped x86 builtins those
+          # headers still call -> "Unable to generate bindings for PHP"
+          # (reproduced with ext-php-rs 0.15.13 and 0.16.3 alike).
+          v=$(dpkg-query -W -f='${Depends}' libclang-dev | grep -o 'libclang-[0-9]*-dev' | grep -o '[0-9]\+' | head -1)
+          echo "LIBCLANG_PATH=/usr/lib/llvm-$v/lib" >> "$GITHUB_ENV"
+          if [ -x "/usr/lib/llvm-$v/bin/clang" ]; then
+            echo "CLANG_PATH=/usr/lib/llvm-$v/bin/clang" >> "$GITHUB_ENV"
+          fi
+          echo "bindgen pinned to LLVM $v"
 
       - name: Install system deps (macOS)
         if: runner.os == 'macOS'
