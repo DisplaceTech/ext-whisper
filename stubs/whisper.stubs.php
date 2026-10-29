@@ -14,6 +14,8 @@ namespace Displace\Whisper;
  */
 class WhisperException extends \RuntimeException
 {
+    /** Not constructible from PHP — instances come from the extension. */
+    public function __construct() {}
 }
 
 /**
@@ -22,6 +24,8 @@ class WhisperException extends \RuntimeException
  */
 class ModelLoadException extends \Displace\Whisper\WhisperException
 {
+    /** Not constructible from PHP — instances come from the extension. */
+    public function __construct() {}
 }
 
 /**
@@ -31,6 +35,8 @@ class ModelLoadException extends \Displace\Whisper\WhisperException
  */
 class AudioException extends \Displace\Whisper\WhisperException
 {
+    /** Not constructible from PHP — instances come from the extension. */
+    public function __construct() {}
 }
 
 /**
@@ -39,6 +45,8 @@ class AudioException extends \Displace\Whisper\WhisperException
  */
 class TranscriptionException extends \Displace\Whisper\WhisperException
 {
+    /** Not constructible from PHP — instances come from the extension. */
+    public function __construct() {}
 }
 
 /**
@@ -49,7 +57,7 @@ class TranscriptionException extends \Displace\Whisper\WhisperException
  * transcription built by PHP would lie about which model and audio
  * produced it.
  */
-final class Transcription
+class Transcription
 {
     /** @throws \Displace\Whisper\WhisperException Always. */
     public function __construct() {}
@@ -89,7 +97,7 @@ class Model
      *
      * @throws \Displace\Whisper\ModelLoadException If the file cannot be read or parsed.
      */
-    public static function load(string $path, array $options = []): self {}
+    public static function load(string $path, ?array $options = null): \Displace\Whisper\Model {}
 
     /**
      * Transcribe a 16kHz mono 16-bit PCM WAV file.
@@ -110,8 +118,10 @@ class Model
      *                                                  has been closed.
      * @throws \Displace\Whisper\WhisperException       On an invalid option.
      */
-    public function transcribe(string $wavPath, array $options = []): \Displace\Whisper\Transcription {}
+    public function transcribe(string $wavPath, ?array $options = null): \Displace\Whisper\Transcription {}
 
     /** Release the underlying model weights. Idempotent. */
     public function close(): void {}
+    /** Not constructible from PHP — instances come from the extension. */
+    public function __construct() {}
 }

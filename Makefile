@@ -8,7 +8,7 @@ FEATURES    ?=
 
 CARGO_FLAGS := $(if $(FEATURES),--features $(FEATURES),)
 
-.PHONY: help build release test clippy fmt fmt-check stubs install uninstall clean check-cargo-php
+.PHONY: help build release test clippy fmt fmt-check stubs stubs-check install uninstall clean check-cargo-php
 
 help:
 	@echo "ext-whisper — common tasks"
@@ -20,6 +20,7 @@ help:
 	@echo "  make fmt         cargo fmt"
 	@echo "  make fmt-check   cargo fmt --check"
 	@echo "  make stubs       Generate target/whisper.stubs.php to diff against stubs/"
+	@echo "  make stubs-check Fail if stubs/ differs from the registered classes"
 	@echo "  make install     cargo php install (loads the extension into your PHP)"
 	@echo "  make uninstall   cargo php remove"
 	@echo "  make clean       cargo clean"
@@ -98,6 +99,13 @@ STUBS_PRELOAD ?=
 
 stubs: check-cargo-php build
 	$(if $(STUBS_PRELOAD),LD_PRELOAD=$(STUBS_PRELOAD) )$(CARGO) php stubs --out target/whisper.stubs.php
+
+# What CI runs: the curated stubs must match the registered classes.
+stubs-check: build
+	@test -f stubs/whisper.stubs.php || { echo "no stubs/whisper.stubs.php yet"; exit 0; }; \
+	$(PHP) -n -d extension=$(EXT_PATH) .github/scripts/stubs-check.php runtime whisper > target/stubs-runtime.txt && \
+	$(PHP) -n .github/scripts/stubs-check.php stubs stubs/whisper.stubs.php 'Displace\Whisper\' > target/stubs-curated.txt && \
+	diff -u target/stubs-curated.txt target/stubs-runtime.txt && echo "stubs match the registered classes"
 
 install: check-cargo-php
 	$(CARGO) php install --release $(CARGO_FLAGS)
