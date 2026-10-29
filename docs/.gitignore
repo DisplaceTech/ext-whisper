@@ -1,0 +1,4 @@
+# mdbook output. Rebuilt locally with `mdbook serve docs/` or
+# `mdbook build docs/`; the published copy is produced by
+# .github/workflows/docs.yml and deployed to GitHub Pages.
+/book/
