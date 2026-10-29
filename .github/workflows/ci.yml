@@ -34,7 +34,7 @@ jobs:
     name: rustfmt + clippy
     runs-on: ubuntu-latest
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system deps
         run: |
@@ -89,7 +89,7 @@ jobs:
           - { os: ubuntu-latest, php: '8.4', ts: zts }
           - { os: ubuntu-latest, php: '8.5', ts: zts }
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v7
 
       - name: Install system deps (Linux)
         if: runner.os == 'Linux'
@@ -165,3 +165,20 @@ jobs:
           TEST_PHP_EXECUTABLE=$(which php) \
           TEST_PHP_ARGS="-d extension=$EXT" \
             php run-tests.php -q --show-diff tests/phpt
+
+      - name: Stubs match the registered classes
+        # The curated stubs must declare exactly what the extension
+        # registers: classes, finality, parents, interfaces, constants,
+        # and every method's modifiers, parameters, defaults and return
+        # type. Two processes because both sides declare the same names.
+        shell: bash
+        run: |
+          if [ ! -f stubs/whisper.stubs.php ]; then
+            echo "::warning::stubs/whisper.stubs.php doesn't exist yet; skipping the stubs check"
+            exit 0
+          fi
+          if [ "$RUNNER_OS" = "macOS" ]; then SUFFIX=dylib; else SUFFIX=so; fi
+          EXT="$PWD/target/debug/libwhisper.$SUFFIX"
+          php -d extension="$EXT" .github/scripts/stubs-check.php runtime whisper > "$RUNNER_TEMP/stubs-runtime.txt"
+          php .github/scripts/stubs-check.php stubs stubs/whisper.stubs.php "Displace\\Whisper\\" > "$RUNNER_TEMP/stubs-curated.txt"
+          diff -u "$RUNNER_TEMP/stubs-curated.txt" "$RUNNER_TEMP/stubs-runtime.txt"
