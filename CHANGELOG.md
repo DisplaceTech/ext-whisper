@@ -5,9 +5,20 @@ based on [Keep a Changelog](https://keepachangelog.com/en/1.1.0/), and
 this project adheres to [Semantic Versioning](https://semver.org/)
 (pre-1.0: breaking changes bump the minor). Dates are tag dates.
 
-## [0.1.1] - 2026-10-29
+## [0.1.2] - 2026-10-29
 
-Maintenance release. Transcription output is unchanged.
+### Fixed
+
+- **Linux x86_64 binaries run on AVX2-only CPUs again.** 0.1.1's were
+  built with `-march=native` on an AVX-512 build runner and crashed
+  with SIGILL (illegal instruction) on CPUs without AVX-512, such as
+  AMD Zen+/Zen 2 and pre-Ice Lake Intel. whisper.cpp now builds for
+  ggml's portable AVX2 baseline. Everything in 0.1.1 below is included.
+
+## [0.1.1] - 2026-10-29 [YANKED]
+
+Never published: its Linux x86_64 binaries required AVX-512. Use 0.1.2.
+Transcription output is unchanged.
 
 ### Changed
 
@@ -43,5 +54,6 @@ First release.
   binaries and a `cargo about` license manifest; docs at
   whisper.displace.tech.
 
+[0.1.2]: https://github.com/DisplaceTech/ext-whisper/compare/v0.1.1...v0.1.2
 [0.1.1]: https://github.com/DisplaceTech/ext-whisper/compare/v0.1.0...v0.1.1
 [0.1.0]: https://github.com/DisplaceTech/ext-whisper/releases/tag/v0.1.0
