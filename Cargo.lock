@@ -460,7 +460,7 @@ checksum = "efa29f09b08e644d5dc1e76a318f758afc9dccbe92ccf84b4778e0433a78eecc"
 
 [[package]]
 name = "ext-whisper"
-version = "0.1.2"
+version = "0.1.3"
 dependencies = [
  "ext-php-rs",
  "hound",
