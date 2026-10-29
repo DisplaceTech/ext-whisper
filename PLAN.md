@@ -1,48 +1,52 @@
-# ext-whisper — plan
+# ext-whisper — design notes
 
-Living document. Status / surface description lives in
-[`README.md`](README.md); how-to-cut-a-release lives in
-[`RELEASE.md`](RELEASE.md).
+Design notes and decision history: why the surface looks the way it
+does and the constraints that bind future work. It is not a to-do list.
 
-## Status snapshot
+- Status and surface: [`README.md`](README.md)
+- What shipped, per release: [`CHANGELOG.md`](CHANGELOG.md)
+- Remaining work: [`future` issues](https://github.com/DisplaceTech/ext-whisper/issues?q=is%3Aissue+is%3Aopen+label%3Afuture), one per idea
+- How to cut a release: [`RELEASE.md`](RELEASE.md)
+
+## Surface (as of 0.1.1)
 
 | Surface | Status |
 | --- | --- |
-| `Model::load` + `use_gpu` option | built |
-| `Model::transcribe` (language/translate/threads) | built |
-| `Model::close` (idempotent) | built |
-| `Transcription` (text/segments/count/duration) | built |
-| Strict 16kHz mono WAV reader (ffmpeg-hint errors, Rust unit tests) | built |
-| `WhisperException` hierarchy | built |
-| PHPT suite (7 tests; transcription gated on `WHISPER_TEST_MODEL`) | built |
-| CI matrix (8.3/8.4/8.5 × {macos-arm64, ubuntu, ubuntu-arm64}) | built |
+| `Model::load` + `use_gpu` option | shipped |
+| `Model::transcribe` (language/translate/threads) | shipped |
+| `Model::close` (idempotent) | shipped |
+| `Transcription` (text/segments/count/duration) | shipped |
+| Strict 16kHz mono WAV reader (ffmpeg-hint errors, Rust unit tests) | shipped |
+| `WhisperException` hierarchy | shipped |
+| PHPT suite (7 tests; transcription gated on `WHISPER_TEST_MODEL`) | shipped |
+| CI matrix (8.3/8.4/8.5 × {macos-arm64, ubuntu} + ZTS 8.4/8.5; weekly schedule) | shipped |
 | Tag-triggered PIE release workflow + `cargo about` manifest | shipped, exercised through v0.1.0 |
 | mdbook docs (whisper.displace.tech) | live |
-| `composer.json` (PIE-compatible) | built |
+| `composer.json` (PIE-compatible) | shipped |
 
 ## Releases
 
+Details per release live in [`CHANGELOG.md`](CHANGELOG.md).
+
 | Version | Date | Notes |
 | --- | --- | --- |
+| v0.1.1 | unreleased | ext-php-rs 0.16.3, scheduled + ZTS CI. whisper-rs stays 0.16.0 (whisper.cpp 1.8.3; no newer release). |
 | v0.1.0 | 2026-06-11 | First public release: load/transcribe/close, Transcription with seconds-offset segments, strict WAV reader, 9-leg PIE binaries + license manifest on the GitHub release. |
 
-## Up next
+## Remaining work
 
-- [x] DNS, Packagist, v0.1.0 tag + published release — done 2026-06-11.
-- [ ] Heads-up issue to whisper-rs upstream (bindings courtesy link),
-      per the umbrella roadmap's upstream-relations policy — awaiting
-      Eric's go-ahead (outreach in his name).
+Tracked as [`future` issues](https://github.com/DisplaceTech/ext-whisper/issues?q=is%3Aissue+is%3Aopen+label%3Afuture), each with its reasoning:
 
-## Later (v0.2 candidates, in rough order)
+- [#2](https://github.com/DisplaceTech/ext-whisper/issues/2) Audio decoding via `symphonia` (the headline v0.2 candidate)
+- [#3](https://github.com/DisplaceTech/ext-whisper/issues/3) Word-level timestamps
+- [#4](https://github.com/DisplaceTech/ext-whisper/issues/4) `Transcription::language()`
+- [#5](https://github.com/DisplaceTech/ext-whisper/issues/5) Progress callback for long files
+- [#6](https://github.com/DisplaceTech/ext-whisper/issues/6) Opt-in Metal / GPU feature flags
+- [#7](https://github.com/DisplaceTech/ext-whisper/issues/7) whisper.cpp 1.9.x, once a whisper-rs release bundles it
 
-- **Audio decoding via `symphonia`** — accept mp3/m4a/ogg/flac and
-  resample internally. The big ergonomic unlock; also the big
-  dependency cliff, which is why v0.1 ships without it.
-- **Word-level timestamps** — whisper.cpp's token-level data exists;
-  needs an API shape that doesn't bloat `segments()`.
-- **`language()` on Transcription** — surface the detected language id.
-- **Progress callback** — long files currently transcribe silently.
-- **Metal / GPU feature flags** — mirror ext-infer's opt-in pattern.
+The heads-up to the whisper-rs maintainers (a bindings courtesy link,
+per the umbrella roadmap's upstream-relations policy) is Eric's call
+and happens in his name.
 
 ## Design notes
 

@@ -39,3 +39,11 @@ complete audio-archive semantic-search pipeline with zero services.
 - **Speaker diarization, word-level timestamps, GPU-default builds** —
   later, if the scope test passes.
 - **Windows** — out of scope platform-wide until someone funds it.
+
+## Writing about this
+
+- [ext-whisper: PHP-Native Audio Transcription](https://eric.mann.blog/ext-whisper-php-native-audio-transcription/)
+- [From Voice to Vectors: Building a Searchable Audio Archive in PHP](https://eric.mann.blog/voice-to-vectors-audio-search-php/)
+
+The stack's launch series ran Sept 22 – Oct 1, 2026; everything else
+is at [eric.mann.blog/writing](https://eric.mann.blog/writing/).
